@@ -2,16 +2,20 @@ import { NextResponse } from 'next/server'
 import { isAuthed } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
-type Row = {
-  ad_spend: number | null
-  leads: number | null
+type SalesRow = {
   appointments: number | null
   no_shows: number | null
-  lost_at_scheduling: number | null
   result: 'FOLLOW_UP' | 'CLOSED' | 'LOST'
   amount: number | null
   payment_type: 'FULL' | 'INSTALLMENT' | null
-  closers: { name: string } | null
+  closers: Array<{ name: string }> | null
+}
+
+type TrafficRow = {
+  ad_spend: number | null
+  leads: number | null
+  scheduled: number | null
+  lost_at_scheduling: number | null
 }
 
 type Acc = { total: number; followUp: number; closed: number; lost: number; revenue: number; full: number; installment: number }
@@ -22,28 +26,39 @@ export async function GET(req: Request) {
   const month = searchParams.get('month')
   const sb = supabaseAdmin()
 
-  let q = sb.from('sales_entries').select('*, closers(name)')
-  if (month && month !== 'all') q = q.eq('month_key', month)
+  let salesQ = sb.from('sales_entries').select('appointments,no_shows,result,amount,payment_type,closers(name)')
+  let trafficQ = sb.from('traffic_entries').select('ad_spend,leads,scheduled,lost_at_scheduling')
+  if (month && month !== 'all') {
+    salesQ = salesQ.eq('month_key', month)
+    trafficQ = trafficQ.eq('month_key', month)
+  }
 
-  const { data, error } = await q
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const [{ data: salesData, error: salesErr }, { data: trafficData, error: trafficErr }] = await Promise.all([salesQ, trafficQ])
+  if (salesErr) return NextResponse.json({ error: salesErr.message }, { status: 500 })
+  if (trafficErr) return NextResponse.json({ error: trafficErr.message }, { status: 500 })
 
-  const rows = (data ?? []) as Row[]
-  const sum = (arr: Row[], fn: (r: Row) => number) => arr.reduce((a, c) => a + fn(c), 0)
-  const adSpend = sum(rows, (r) => Number(r.ad_spend || 0))
-  const leads = sum(rows, (r) => Number(r.leads || 0))
-  const appointments = sum(rows, (r) => Number(r.appointments || 0))
-  const noShows = sum(rows, (r) => Number(r.no_shows || 0))
-  const lostAtScheduling = sum(rows, (r) => Number(r.lost_at_scheduling || 0))
-  const closed = rows.filter((r) => r.result === 'CLOSED')
+  const salesRows = (salesData ?? []) as SalesRow[]
+  const trafficRows = (trafficData ?? []) as TrafficRow[]
+
+  const sumSales = (fn: (r: SalesRow) => number) => salesRows.reduce((a, c) => a + fn(c), 0)
+  const sumTraffic = (fn: (r: TrafficRow) => number) => trafficRows.reduce((a, c) => a + fn(c), 0)
+
+  const adSpend = sumTraffic((r) => Number(r.ad_spend || 0))
+  const leads = sumTraffic((r) => Number(r.leads || 0))
+  const scheduled = sumTraffic((r) => Number(r.scheduled || 0))
+  const lostAtScheduling = sumTraffic((r) => Number(r.lost_at_scheduling || 0))
+
+  const appointments = sumSales((r) => Number(r.appointments || 0))
+  const noShows = sumSales((r) => Number(r.no_shows || 0))
+  const closed = salesRows.filter((r) => r.result === 'CLOSED')
   const totalRevenue = closed.reduce((a, c) => a + Number(c.amount || 0), 0)
   const noShowQuote = appointments > 0 ? (noShows / appointments) * 100 : 0
   const roi = adSpend > 0 ? ((totalRevenue - adSpend) / adSpend) * 100 : 0
   const avgDeal = closed.length ? totalRevenue / closed.length : 0
 
   const byCloser: Record<string, Acc> = {}
-  for (const r of rows) {
-    const name = r.closers?.name || 'Unknown'
+  for (const r of salesRows) {
+    const name = r.closers?.[0]?.name || 'Unknown'
     byCloser[name] ||= { total: 0, followUp: 0, closed: 0, lost: 0, revenue: 0, full: 0, installment: 0 }
     byCloser[name].total += 1
     if (r.result === 'FOLLOW_UP') byCloser[name].followUp += 1
@@ -65,7 +80,19 @@ export async function GET(req: Request) {
   }))
 
   return NextResponse.json({
-    totals: { adSpend, leads, appointments, noShows, noShowQuote, lostAtScheduling, totalRevenue, closes: closed.length, avgDeal, roi },
+    totals: {
+      adSpend,
+      leads,
+      scheduled,
+      lostAtScheduling,
+      appointments,
+      noShows,
+      noShowQuote,
+      totalRevenue,
+      closes: closed.length,
+      avgDeal,
+      roi,
+    },
     closerStats,
   })
 }

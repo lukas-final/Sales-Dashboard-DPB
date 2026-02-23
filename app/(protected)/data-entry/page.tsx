@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 
 type Closer = { id: string; name: string }
-type Flow = 'TERMINIERT' | 'LOST_SCHED'
 type Attendance = 'NO_SHOW' | 'ERSCHIENEN' | ''
 type Outcome = 'FOLLOW_UP' | 'CLOSED' | 'LOST' | ''
 type Payment = 'FULL' | 'INSTALLMENT' | ''
@@ -11,8 +10,14 @@ type Payment = 'FULL' | 'INSTALLMENT' | ''
 export default function DataEntryPage() {
   const [closers, setClosers] = useState<Closer[]>([])
   const [entryDate, setEntryDate] = useState(new Date().toISOString().slice(0, 10))
+
+  // Block A: traffic / top funnel
   const [adSpend, setAdSpend] = useState(0)
-  const [flow, setFlow] = useState<Flow>('TERMINIERT')
+  const [leads, setLeads] = useState(0)
+  const [scheduled, setScheduled] = useState(0)
+  const [lostScheduling, setLostScheduling] = useState(0)
+
+  // Block B: closer pipeline (one terminierter kontakt)
   const [closerId, setCloserId] = useState('')
   const [attendance, setAttendance] = useState<Attendance>('')
   const [outcome, setOutcome] = useState<Outcome>('')
@@ -20,7 +25,9 @@ export default function DataEntryPage() {
   const [amount, setAmount] = useState('')
   const [installmentAmount, setInstallmentAmount] = useState('')
   const [installmentCount, setInstallmentCount] = useState('')
-  const [error, setError] = useState('')
+
+  const [errorA, setErrorA] = useState('')
+  const [errorB, setErrorB] = useState('')
 
   useEffect(() => {
     fetch('/api/closers')
@@ -31,18 +38,34 @@ export default function DataEntryPage() {
       })
   }, [])
 
-  const canShowAttendance = flow === 'TERMINIERT'
-  const canShowOutcome = flow === 'TERMINIERT' && attendance === 'ERSCHIENEN'
-  const canShowPayment = canShowOutcome && outcome === 'CLOSED'
-
-  const submit = async (e: React.FormEvent) => {
+  const submitTraffic = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setErrorA('')
+    const res = await fetch('/api/traffic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        entry_date: entryDate,
+        ad_spend: adSpend,
+        leads,
+        scheduled,
+        lost_at_scheduling: lostScheduling,
+      }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: 'Fehler' }))
+      setErrorA(body.error || 'Fehler beim Speichern')
+      return
+    }
+    alert('Traffic gespeichert')
+  }
+
+  const submitCloser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErrorB('')
 
     const payload = {
       entry_date: entryDate,
-      ad_spend: adSpend,
-      flow,
       closer_id: closerId,
       attendance,
       result: outcome,
@@ -60,11 +83,11 @@ export default function DataEntryPage() {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({ error: 'Fehler' }))
-      setError(body.error || 'Fehler beim Speichern')
+      setErrorB(body.error || 'Fehler beim Speichern')
       return
     }
 
-    alert('Lead gespeichert')
+    alert('Closer-Eintrag gespeichert')
     setAttendance('')
     setOutcome('')
     setPaymentType('')
@@ -74,72 +97,70 @@ export default function DataEntryPage() {
   }
 
   return (
-    <form onSubmit={submit} className="max-w-3xl space-y-4">
-      <h1 className="text-2xl font-bold">Dateneingabe (Ablauf)</h1>
+    <div className="max-w-5xl space-y-5">
+      <h1 className="text-2xl font-bold">Dateneingabe</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <Field label="Datum">
-          <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
-        </Field>
-        <Field label="Ad Spend (Tag)">
-          <input type="number" value={adSpend} onChange={(e) => setAdSpend(Number(e.target.value))} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
-        </Field>
-      </div>
-
-      <Step title="1) Lead Eingang → Terminiert oder Verloren in Terminierung">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Select label="Lead Status" value={flow} onChange={(v) => setFlow(v as Flow)} options={[{ v: 'TERMINIERT', l: 'Terminiert bei Closer' }, { v: 'LOST_SCHED', l: 'Verloren in Terminierung' }]} />
-          {flow === 'TERMINIERT' ? (
-            <Select label="Closer" value={closerId} onChange={setCloserId} options={closers.map((c) => ({ v: c.id, l: c.name }))} />
-          ) : null}
-        </div>
-      </Step>
-
-      {canShowAttendance ? (
-        <Step title="2) Bei terminiert → No Show oder Erschienen">
-          <Select label="Attendance" value={attendance} onChange={(v) => { setAttendance(v as Attendance); setOutcome(''); setPaymentType('') }} options={[{ v: 'NO_SHOW', l: 'No Show' }, { v: 'ERSCHIENEN', l: 'Erschienen' }]} />
-        </Step>
-      ) : null}
-
-      {canShowOutcome ? (
-        <Step title="3) Bei erschienen → Ergebnis">
-          <Select label="Ergebnis" value={outcome} onChange={(v) => { setOutcome(v as Outcome); setPaymentType('') }} options={[{ v: 'FOLLOW_UP', l: 'Follow Up' }, { v: 'LOST', l: 'Verloren' }, { v: 'CLOSED', l: 'Abschluss' }]} />
-        </Step>
-      ) : null}
-
-      {canShowPayment ? (
-        <Step title="4) Bei Abschluss → Vollzahler oder Ratenzahler">
+      <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 space-y-3">
+        <h2 className="font-semibold">A) Ad Spend + Lead Eingang (unabhängig vom Verkauf)</h2>
+        <form onSubmit={submitTraffic} className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Select label="Zahlungsart" value={paymentType} onChange={(v) => setPaymentType(v as Payment)} options={[{ v: 'FULL', l: 'Vollzahler' }, { v: 'INSTALLMENT', l: 'Ratenzahler' }]} />
-            <Field label="Abschlussbetrag (€)">
-              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
+            <Field label="Datum">
+              <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
+            </Field>
+            <Field label="Ad Spend (Tag)">
+              <input type="number" value={adSpend} onChange={(e) => setAdSpend(Number(e.target.value))} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
+            </Field>
+            <Field label="Lead Eingang gesamt">
+              <input type="number" value={leads} onChange={(e) => setLeads(Number(e.target.value))} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
+            </Field>
+            <Field label="Terminiert gesamt">
+              <input type="number" value={scheduled} onChange={(e) => setScheduled(Number(e.target.value))} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
+            </Field>
+            <Field label="Verloren in Terminierung">
+              <input type="number" value={lostScheduling} onChange={(e) => setLostScheduling(Number(e.target.value))} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
             </Field>
           </div>
-          {paymentType === 'INSTALLMENT' ? (
+          {errorA ? <p className="text-sm text-red-400">{errorA}</p> : null}
+          <button className="bg-blue-600 hover:bg-blue-500 rounded px-4 py-2">Traffic speichern</button>
+        </form>
+      </section>
+
+      <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 space-y-3">
+        <h2 className="font-semibold">B) Terminierter Kontakt bei Closer (separate Statistik)</h2>
+        <form onSubmit={submitCloser} className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Select label="Closer" value={closerId} onChange={setCloserId} options={closers.map((c) => ({ v: c.id, l: c.name }))} />
+            <Select label="No Show oder Erschienen" value={attendance} onChange={(v) => { setAttendance(v as Attendance); setOutcome(''); setPaymentType('') }} options={[{ v: 'NO_SHOW', l: 'No Show' }, { v: 'ERSCHIENEN', l: 'Erschienen' }]} />
+          </div>
+
+          {attendance === 'ERSCHIENEN' ? (
+            <Select label="Ergebnis" value={outcome} onChange={(v) => { setOutcome(v as Outcome); setPaymentType('') }} options={[{ v: 'FOLLOW_UP', l: 'Follow Up' }, { v: 'LOST', l: 'Verloren' }, { v: 'CLOSED', l: 'Abschluss' }]} />
+          ) : null}
+
+          {attendance === 'ERSCHIENEN' && outcome === 'CLOSED' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Field label="Ratenhöhe (€)">
-                <input type="number" value={installmentAmount} onChange={(e) => setInstallmentAmount(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
+              <Select label="Zahlungsart" value={paymentType} onChange={(v) => setPaymentType(v as Payment)} options={[{ v: 'FULL', l: 'Vollzahler' }, { v: 'INSTALLMENT', l: 'Ratenzahler' }]} />
+              <Field label="Gesamthöhe Abschluss (€)">
+                <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
               </Field>
-              <Field label="Anzahl Raten">
-                <input type="number" value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
-              </Field>
+              {paymentType === 'INSTALLMENT' ? (
+                <>
+                  <Field label="Ratenhöhe (€)">
+                    <input type="number" value={installmentAmount} onChange={(e) => setInstallmentAmount(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
+                  </Field>
+                  <Field label="Anzahl Raten">
+                    <input type="number" value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
+                  </Field>
+                </>
+              ) : null}
             </div>
           ) : null}
-        </Step>
-      ) : null}
 
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
-      <button className="bg-blue-600 hover:bg-blue-500 rounded px-4 py-2">Eintrag speichern</button>
-    </form>
-  )
-}
-
-function Step({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 space-y-3">
-      <h2 className="font-semibold">{title}</h2>
-      {children}
-    </section>
+          {errorB ? <p className="text-sm text-red-400">{errorB}</p> : null}
+          <button className="bg-green-600 hover:bg-green-500 rounded px-4 py-2">Closer-Eintrag speichern</button>
+        </form>
+      </section>
+    </div>
   )
 }
 

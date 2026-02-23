@@ -6,6 +6,7 @@ type Stats = {
   totals: {
     adSpend: number
     leads: number
+    scheduled: number
     appointments: number
     noShows: number
     noShowQuote: number
@@ -49,8 +50,9 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
         <Card title="Ad Spend" value={euro(t?.adSpend)} />
-        <Card title="Leads" value={String(t?.leads ?? 0)} />
-        <Card title="Termine" value={String(t?.appointments ?? 0)} />
+        <Card title="Lead Eingang" value={String(t?.leads ?? 0)} />
+        <Card title="Terminiert (Top Funnel)" value={String(t?.scheduled ?? 0)} />
+        <Card title="Termine bei Closer" value={String(t?.appointments ?? 0)} />
         <Card title="No Shows" value={`${t?.noShows ?? 0} (${pct(t?.noShowQuote)})`} />
         <Card title="Verloren Terminierung" value={String(t?.lostAtScheduling ?? 0)} />
         <Card title="Umsatz" value={euro(t?.totalRevenue)} />
