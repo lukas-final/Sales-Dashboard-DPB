@@ -14,10 +14,12 @@ create table if not exists public.sales_entries (
   appointments integer not null default 0,
   no_shows integer not null default 0,
   lost_at_scheduling integer not null default 0,
-  closer_id uuid not null references public.closers(id) on delete restrict,
+  closer_id uuid references public.closers(id) on delete restrict,
   result text not null check (result in ('FOLLOW_UP','CLOSED','LOST')),
   amount numeric(12,2),
   payment_type text check (payment_type in ('FULL','INSTALLMENT')),
+  installment_amount numeric(12,2),
+  installment_count integer,
   created_at timestamptz not null default now()
 );
 

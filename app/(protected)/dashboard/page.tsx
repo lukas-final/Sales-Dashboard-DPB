@@ -21,6 +21,16 @@ type Stats = {
 export default function DashboardPage() {
   const [month, setMonth] = useState('all')
   const [data, setData] = useState<Stats | null>(null)
+  const [months, setMonths] = useState<string[]>([])
+
+  useEffect(() => {
+    fetch('/api/sales?month=all')
+      .then((r) => r.json())
+      .then((rows: Array<{ month_key: string }>) => {
+        const unique = Array.from(new Set(rows.map((r) => r.month_key).filter(Boolean))).sort().reverse()
+        setMonths(unique)
+      })
+  }, [])
 
   useEffect(() => {
     fetch(`/api/stats?month=${month}`).then((r) => r.json()).then(setData)
@@ -33,7 +43,7 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-bold">Sales Dashboard</h1>
         <select className="ml-auto bg-neutral-800 border border-neutral-700 rounded px-2 py-1" value={month} onChange={(e) => setMonth(e.target.value)}>
           <option value="all">Gesamt</option>
-          {['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12'].map((m)=><option key={m} value={m}>{m}</option>)}
+          {months.map((m)=><option key={m} value={m}>{m}</option>)}
         </select>
       </div>
 
