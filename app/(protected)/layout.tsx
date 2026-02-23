@@ -8,8 +8,8 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   if (!pass || auth !== pass) redirect('/login')
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-white">
-      <nav className="border-b border-neutral-800 px-4 py-3 flex gap-4 text-sm">
+    <main className="min-h-screen bg-neutral-100 text-neutral-900">
+      <nav className="bg-white border-b border-neutral-200 px-4 py-3 flex gap-4 text-sm">
         <Link href="/dashboard">Dashboard</Link>
         <Link href="/data-entry">Dateneingabe</Link>
         <Link href="/admin">Admin</Link>

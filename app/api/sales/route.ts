@@ -20,11 +20,13 @@ function validatePayload(b: Record<string, unknown>) {
   const attendance = String(b.attendance || '') as 'NO_SHOW' | 'ERSCHIENEN' | ''
   const result = String(b.result || '') as 'FOLLOW_UP' | 'CLOSED' | 'LOST' | ''
   const payment_type = String(b.payment_type || '') as 'FULL' | 'INSTALLMENT' | ''
+  const follow_up_date = String(b.follow_up_date || '')
 
   if (!entry_date) return { error: 'entry_date required' }
   if (!closer_id) return { error: 'closer_id required' }
   if (!attendance) return { error: 'attendance required' }
   if (attendance === 'ERSCHIENEN' && !result) return { error: 'result required after erschienen' }
+  if (result === 'FOLLOW_UP' && !follow_up_date) return { error: 'follow_up_date required for follow up' }
 
   const amount = b.amount === null || b.amount === '' || b.amount === undefined ? null : Number(b.amount)
   const installment_amount = b.installment_amount === null || b.installment_amount === '' || b.installment_amount === undefined ? null : Number(b.installment_amount)
@@ -53,6 +55,7 @@ function validatePayload(b: Record<string, unknown>) {
       payment_type: result === 'CLOSED' ? payment_type : null,
       installment_amount: result === 'CLOSED' && payment_type === 'INSTALLMENT' ? installment_amount : null,
       installment_count: result === 'CLOSED' && payment_type === 'INSTALLMENT' ? installment_count : null,
+      follow_up_date: result === 'FOLLOW_UP' ? follow_up_date : null,
     },
   }
 }
