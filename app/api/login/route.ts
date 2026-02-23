@@ -21,7 +21,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Ungültige Login-Daten' }, { status: 401 })
   }
 
-  if (String(data.password) !== password) {
+  const expectedPassword = String(data.password || '').trim()
+  const okPassword = data.role === 'CLOSER'
+    ? expectedPassword.toLowerCase() === password.toLowerCase()
+    : expectedPassword === password
+
+  if (!okPassword) {
     return NextResponse.json({ error: 'Ungültige Login-Daten' }, { status: 401 })
   }
 
