@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { isAuthed } from '@/lib/auth'
+import { getSessionUser } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 type SalesRow = {
@@ -21,7 +21,9 @@ type TrafficRow = {
 type Acc = { total: number; followUp: number; closed: number; lost: number; revenue: number; full: number; installment: number }
 
 export async function GET(req: Request) {
-  if (!isAuthed()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = getSessionUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (user.role !== 'ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const { searchParams } = new URL(req.url)
   const month = searchParams.get('month')
   const sb = supabaseAdmin()

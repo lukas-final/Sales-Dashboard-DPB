@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 type Stats = {
   totals: {
@@ -20,9 +21,16 @@ type Stats = {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [month, setMonth] = useState('all')
   const [data, setData] = useState<Stats | null>(null)
   const [months, setMonths] = useState<string[]>([])
+
+  useEffect(() => {
+    fetch('/api/me').then((r) => r.json()).then((u) => {
+      if (u?.role === 'CLOSER') router.push('/data-entry')
+    })
+  }, [router])
 
   useEffect(() => {
     Promise.all([

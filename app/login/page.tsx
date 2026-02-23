@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const router = useRouter()
@@ -14,9 +15,12 @@ export default function LoginPage() {
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ username, password }),
     })
-    if (!res.ok) return setError('Falsches Passwort')
+    if (!res.ok) {
+      const b = await res.json().catch(() => ({ error: 'Login fehlgeschlagen' }))
+      return setError(b.error || 'Login fehlgeschlagen')
+    }
     router.push('/dashboard')
     router.refresh()
   }
@@ -29,6 +33,13 @@ export default function LoginPage() {
           <p className="text-sm text-slate-500">Sales Dashboard Login</p>
         </div>
         <input
+          type="text"
+          className="apple-input"
+          placeholder="Benutzername"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+        <input
           type="password"
           className="apple-input"
           placeholder="Passwort"
@@ -37,6 +48,7 @@ export default function LoginPage() {
         />
         {error ? <p className="text-red-600 text-sm">{error}</p> : null}
         <button className="w-full apple-btn-primary">Einloggen</button>
+        <p className="text-xs text-slate-500">Admin: admin / DPB2026 · Closer: alex|niklas / Closing</p>
       </form>
     </main>
   )

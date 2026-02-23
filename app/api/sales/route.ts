@@ -1,18 +1,6 @@
 import { NextResponse } from 'next/server'
-import { isAuthed } from '@/lib/auth'
+import { getSessionUser } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-
-export async function GET(req: Request) {
-  if (!isAuthed()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { searchParams } = new URL(req.url)
-  const month = searchParams.get('month')
-  const sb = supabaseAdmin()
-  let q = sb.from('sales_entries').select('*, closers(name)').order('entry_date', { ascending: false })
-  if (month && month !== 'all') q = q.eq('month_key', month)
-  const { data, error } = await q
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
-}
 
 function validatePayload(b: Record<string, unknown>) {
   const entry_date = String(b.entry_date || '')
@@ -60,9 +48,29 @@ function validatePayload(b: Record<string, unknown>) {
   }
 }
 
+export async function GET(req: Request) {
+  const user = getSessionUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { searchParams } = new URL(req.url)
+  const month = searchParams.get('month')
+  const sb = supabaseAdmin()
+  let q = sb.from('sales_entries').select('*, closers(name)').order('entry_date', { ascending: false })
+  if (month && month !== 'all') q = q.eq('month_key', month)
+  if (user.role === 'CLOSER' && user.closerId) q = q.eq('closer_id', user.closerId)
+
+  const { data, error } = await q
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json(data)
+}
+
 export async function POST(req: Request) {
-  if (!isAuthed()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const b = await req.json()
+  const user = getSessionUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const b = (await req.json()) as Record<string, unknown>
+  if (user.role === 'CLOSER') b.closer_id = user.closerId || ''
+
   const validated = validatePayload(b)
   if ('error' in validated) return NextResponse.json({ error: validated.error }, { status: 400 })
 
@@ -73,26 +81,39 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  if (!isAuthed()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const b = await req.json()
+  const user = getSessionUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const b = (await req.json()) as Record<string, unknown>
   const id = String(b.id || '')
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+  if (user.role === 'CLOSER') b.closer_id = user.closerId || ''
+
   const validated = validatePayload(b)
   if ('error' in validated) return NextResponse.json({ error: validated.error }, { status: 400 })
 
   const sb = supabaseAdmin()
-  const { data, error } = await sb.from('sales_entries').update(validated.payload).eq('id', id).select('*').single()
+  let q = sb.from('sales_entries').update(validated.payload).eq('id', id)
+  if (user.role === 'CLOSER' && user.closerId) q = q.eq('closer_id', user.closerId)
+  const { data, error } = await q.select('*').single()
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
 
 export async function DELETE(req: Request) {
-  if (!isAuthed()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = getSessionUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { searchParams } = new URL(req.url)
   const id = searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
   const sb = supabaseAdmin()
-  const { error } = await sb.from('sales_entries').delete().eq('id', id)
+  let q = sb.from('sales_entries').delete().eq('id', id)
+  if (user.role === 'CLOSER' && user.closerId) q = q.eq('closer_id', user.closerId)
+  const { error } = await q
+
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

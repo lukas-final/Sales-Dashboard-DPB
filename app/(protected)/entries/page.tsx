@@ -19,6 +19,7 @@ type Sale = {
 }
 
 export default function EntriesPage() {
+  const [role, setRole] = useState<'ADMIN' | 'CLOSER'>('ADMIN')
   const [traffic, setTraffic] = useState<Traffic[]>([])
   const [sales, setSales] = useState<Sale[]>([])
   const [closers, setClosers] = useState<Closer[]>([])
@@ -30,14 +31,27 @@ export default function EntriesPage() {
   const [sForm, setSForm] = useState({ entry_date: '', closer_id: '', attendance: 'ERSCHIENEN', result: 'FOLLOW_UP', follow_up_date: '', amount: '', payment_type: '', installment_amount: '', installment_count: '' })
 
   const load = async () => {
-    const [t, s, c] = await Promise.all([
-      fetch('/api/traffic?month=all').then((r) => r.json()),
-      fetch('/api/sales?month=all').then((r) => r.json()),
-      fetch('/api/closers').then((r) => r.json()),
-    ])
-    setTraffic(t)
-    setSales(s)
-    setClosers(c)
+    const me = await fetch('/api/me').then((r) => r.json())
+    if (me?.role) setRole(me.role)
+
+    const salesReq = fetch('/api/sales?month=all').then((r) => r.json())
+    const closersReq = fetch('/api/closers').then((r) => r.json())
+
+    if (me?.role === 'ADMIN') {
+      const [t, s, c] = await Promise.all([
+        fetch('/api/traffic?month=all').then((r) => r.json()),
+        salesReq,
+        closersReq,
+      ])
+      setTraffic(t)
+      setSales(s)
+      setClosers(c)
+    } else {
+      const [s, c] = await Promise.all([salesReq, closersReq])
+      setTraffic([])
+      setSales(s)
+      setClosers(c)
+    }
   }
 
   useEffect(() => { void load() }, [])
@@ -103,6 +117,7 @@ export default function EntriesPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Einträge verwalten</h1>
 
+      {role === 'ADMIN' ? (
       <section className="bg-slate-950/60 border border-slate-700 rounded-xl p-4 text-slate-100">
         <h2 className="font-semibold mb-3">Traffic-Einträge</h2>
         <div className="space-y-2 text-sm">
@@ -135,6 +150,7 @@ export default function EntriesPage() {
           ))}
         </div>
       </section>
+      ) : null}
 
       <section className="bg-slate-950/60 border border-slate-700 rounded-xl p-4 text-slate-100">
         <h2 className="font-semibold mb-3">Closer-Einträge</h2>
@@ -144,10 +160,14 @@ export default function EntriesPage() {
               {editSalesId === r.id ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <input className="apple-input bg-slate-900 text-slate-100 border-slate-700" type="date" value={sForm.entry_date} onChange={(e) => setSForm({ ...sForm, entry_date: e.target.value })} />
-                  <select className="apple-input bg-slate-900 text-slate-100 border-slate-700" value={sForm.closer_id} onChange={(e) => setSForm({ ...sForm, closer_id: e.target.value })}>
-                    <option value="">Closer</option>
-                    {closers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
+                  {role === 'ADMIN' ? (
+                    <select className="apple-input bg-slate-900 text-slate-100 border-slate-700" value={sForm.closer_id} onChange={(e) => setSForm({ ...sForm, closer_id: e.target.value })}>
+                      <option value="">Closer</option>
+                      {closers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  ) : (
+                    <input className="apple-input bg-slate-900 text-slate-100 border-slate-700" disabled value={closers.find(c => c.id === sForm.closer_id)?.name || 'Mein Account'} />
+                  )}
                   <select className="apple-input bg-slate-900 text-slate-100 border-slate-700" value={sForm.attendance} onChange={(e) => setSForm({ ...sForm, attendance: e.target.value })}>
                     <option value="NO_SHOW">No Show</option>
                     <option value="ERSCHIENEN">Erschienen</option>

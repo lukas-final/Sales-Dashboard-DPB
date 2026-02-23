@@ -8,6 +8,8 @@ type Outcome = 'FOLLOW_UP' | 'CLOSED' | 'LOST' | ''
 type Payment = 'FULL' | 'INSTALLMENT' | ''
 
 export default function DataEntryPage() {
+  const [role, setRole] = useState<'ADMIN' | 'CLOSER'>('ADMIN')
+  const [myCloserId, setMyCloserId] = useState('')
   const [closers, setClosers] = useState<Closer[]>([])
   const [entryDate] = useState(new Date().toISOString().slice(0, 10))
   const [trafficMonth, setTrafficMonth] = useState(new Date().toISOString().slice(0, 7))
@@ -32,13 +34,21 @@ export default function DataEntryPage() {
   const [errorB, setErrorB] = useState('')
 
   useEffect(() => {
+    fetch('/api/me').then((r) => r.json()).then((u) => {
+      if (u?.role) setRole(u.role)
+      if (u?.closerId) {
+        setMyCloserId(u.closerId)
+        setCloserId(u.closerId)
+      }
+    })
+
     fetch('/api/closers')
       .then((r) => r.json())
       .then((d: Closer[]) => {
         setClosers(d)
-        if (d?.[0]) setCloserId(d[0].id)
+        if (d?.[0] && !myCloserId) setCloserId(d[0].id)
       })
-  }, [])
+  }, [myCloserId])
 
   const submitTraffic = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,6 +114,7 @@ export default function DataEntryPage() {
     <div className="max-w-5xl w-full overflow-x-hidden space-y-5">
       <h1 className="text-2xl font-bold">Dateneingabe</h1>
 
+      {role === 'ADMIN' ? (
       <section className="bg-slate-950/60 border border-slate-700 rounded-xl p-4 space-y-3 text-slate-100">
         <h2 className="font-semibold">A) Ad Spend + Lead Eingang (unabhängig vom Verkauf)</h2>
         <form onSubmit={submitTraffic} className="space-y-3">
@@ -128,12 +139,19 @@ export default function DataEntryPage() {
           <button className="bg-blue-600 hover:bg-blue-700 text-white rounded px-4 py-2">Traffic speichern</button>
         </form>
       </section>
+      ) : null}
 
       <section className="bg-slate-950/60 border border-slate-700 rounded-xl p-4 space-y-3 text-slate-100">
         <h2 className="font-semibold">B) Terminierter Kontakt bei Closer (separate Statistik)</h2>
         <form onSubmit={submitCloser} className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Select label="Closer" value={closerId} onChange={setCloserId} options={closers.map((c) => ({ v: c.id, l: c.name }))} />
+            {role === 'ADMIN' ? (
+              <Select label="Closer" value={closerId} onChange={setCloserId} options={closers.map((c) => ({ v: c.id, l: c.name }))} />
+            ) : (
+              <Field label="Closer">
+                <input value={closers.find(c => c.id === closerId)?.name || 'Mein Account'} disabled className="w-full bg-slate-900 text-slate-100 border border-slate-700 rounded px-3 py-2" />
+              </Field>
+            )}
             <Select label="No Show oder Erschienen" value={attendance} onChange={(v) => { setAttendance(v as Attendance); setOutcome(''); setPaymentType('') }} options={[{ v: 'NO_SHOW', l: 'No Show' }, { v: 'ERSCHIENEN', l: 'Erschienen' }]} />
           </div>
 

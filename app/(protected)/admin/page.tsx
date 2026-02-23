@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 type Closer = { id: string; name: string }
 
 export default function AdminPage() {
+  const router = useRouter()
   const [name, setName] = useState('')
   const [closers, setClosers] = useState<Closer[]>([])
   const [error, setError] = useState('')
@@ -14,7 +16,12 @@ export default function AdminPage() {
     const d = (await r.json()) as Closer[]
     setClosers(d)
   }
-  useEffect(() => { void load() }, [])
+  useEffect(() => {
+    fetch('/api/me').then((r) => r.json()).then((u) => {
+      if (u?.role === 'CLOSER') router.push('/data-entry')
+    })
+    void load()
+  }, [router])
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault()
