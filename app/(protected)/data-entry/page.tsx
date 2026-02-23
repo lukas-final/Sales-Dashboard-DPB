@@ -9,7 +9,8 @@ type Payment = 'FULL' | 'INSTALLMENT' | ''
 
 export default function DataEntryPage() {
   const [closers, setClosers] = useState<Closer[]>([])
-  const [entryDate, setEntryDate] = useState(new Date().toISOString().slice(0, 10))
+  const [entryDate] = useState(new Date().toISOString().slice(0, 10))
+  const [trafficMonth, setTrafficMonth] = useState(new Date().toISOString().slice(0, 7))
 
   // Block A: traffic / top funnel
   const [adSpend, setAdSpend] = useState(0)
@@ -45,7 +46,7 @@ export default function DataEntryPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        entry_date: entryDate,
+        entry_date: `${trafficMonth}-01`,
         ad_spend: adSpend,
         leads,
         scheduled,
@@ -104,10 +105,10 @@ export default function DataEntryPage() {
         <h2 className="font-semibold">A) Ad Spend + Lead Eingang (unabhängig vom Verkauf)</h2>
         <form onSubmit={submitTraffic} className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Field label="Datum">
-              <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
+            <Field label="Monat">
+              <input type="month" value={trafficMonth} onChange={(e) => setTrafficMonth(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
             </Field>
-            <Field label="Ad Spend (Tag)">
+            <Field label="Ad Spend (Monat)">
               <input type="number" value={adSpend} onChange={(e) => setAdSpend(Number(e.target.value))} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
             </Field>
             <Field label="Lead Eingang gesamt">
