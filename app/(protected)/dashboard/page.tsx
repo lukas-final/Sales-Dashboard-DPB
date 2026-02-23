@@ -25,12 +25,20 @@ export default function DashboardPage() {
   const [months, setMonths] = useState<string[]>([])
 
   useEffect(() => {
-    fetch('/api/sales?month=all')
-      .then((r) => r.json())
-      .then((rows: Array<{ month_key: string }>) => {
-        const unique = Array.from(new Set(rows.map((r) => r.month_key).filter(Boolean))).sort().reverse()
-        setMonths(unique)
+    Promise.all([
+      fetch('/api/sales?month=all').then((r) => r.json() as Promise<Array<{ month_key: string }>>),
+      fetch('/api/traffic?month=all').then((r) => r.json() as Promise<Array<{ month_key: string }>>),
+    ]).then(([salesRows, trafficRows]) => {
+      const all = [...salesRows, ...trafficRows]
+      const fromData = Array.from(new Set(all.map((r) => r.month_key).filter(Boolean)))
+      const now = new Date()
+      const recent = Array.from({ length: 12 }).map((_, i) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
       })
+      const unique = Array.from(new Set([...fromData, ...recent])).sort().reverse()
+      setMonths(unique)
+    })
   }, [])
 
   useEffect(() => {

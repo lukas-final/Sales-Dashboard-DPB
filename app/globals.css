@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --bg-0: #f5f7fb;
-  --bg-1: #eef2f8;
-  --text: #0f172a;
-  --muted: #64748b;
-  --card: rgba(255, 255, 255, 0.72);
-  --border: rgba(255, 255, 255, 0.5);
+  --bg-0: #0f172a;
+  --bg-1: #111827;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --card: rgba(255, 255, 255, 0.88);
+  --border: rgba(255, 255, 255, 0.6);
 }
 
 * {
@@ -18,19 +18,19 @@
 body {
   color: var(--text);
   background:
-    radial-gradient(1200px 600px at -10% -10%, #dbeafe 0%, transparent 60%),
-    radial-gradient(900px 500px at 120% 0%, #e9d5ff 0%, transparent 55%),
+    radial-gradient(1200px 600px at -10% -10%, #1d4ed8 0%, transparent 45%),
+    radial-gradient(900px 500px at 120% 0%, #7c3aed 0%, transparent 40%),
     linear-gradient(180deg, var(--bg-0), var(--bg-1));
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 @layer components {
   .apple-shell {
-    @apply min-h-screen text-slate-900;
+    @apply min-h-screen text-slate-100;
   }
 
   .apple-nav {
-    @apply sticky top-0 z-50 backdrop-blur-xl bg-white/70 border-b border-white/60;
+    @apply sticky top-0 z-50 backdrop-blur-xl bg-slate-900/55 border-b border-white/20;
   }
 
   .apple-card {
@@ -54,7 +54,7 @@ body {
   }
 
   .apple-btn-secondary {
-    @apply apple-btn bg-white text-slate-800 border border-slate-200 hover:bg-slate-50;
+    @apply apple-btn bg-white/90 text-slate-900 border border-white/80 hover:bg-white;
   }
 }
 
