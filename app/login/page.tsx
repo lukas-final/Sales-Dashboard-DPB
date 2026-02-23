@@ -48,7 +48,6 @@ export default function LoginPage() {
         />
         {error ? <p className="text-red-600 text-sm">{error}</p> : null}
         <button className="w-full apple-btn-primary">Einloggen</button>
-        <p className="text-xs text-slate-500">Admin: admin / DPB2026 · Closer: alex|niklas / Closing</p>
       </form>
     </main>
   )
