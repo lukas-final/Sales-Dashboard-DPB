@@ -98,7 +98,7 @@ export default function DataEntryPage() {
   }
 
   return (
-    <div className="max-w-5xl space-y-5">
+    <div className="max-w-5xl w-full overflow-x-hidden space-y-5">
       <h1 className="text-2xl font-bold">Dateneingabe</h1>
 
       <section className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 space-y-3">
@@ -106,7 +106,7 @@ export default function DataEntryPage() {
         <form onSubmit={submitTraffic} className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Monat">
-              <input type="month" value={trafficMonth} onChange={(e) => setTrafficMonth(e.target.value)} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
+              <input type="month" value={trafficMonth} onChange={(e) => setTrafficMonth(e.target.value)} className="w-full min-w-0 max-w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2 appearance-none" />
             </Field>
             <Field label="Ad Spend (Monat)">
               <input type="number" value={adSpend} onChange={(e) => setAdSpend(Number(e.target.value))} className="w-full bg-neutral-800 border border-neutral-700 rounded px-3 py-2" />
