@@ -104,24 +104,24 @@ export default function DataEntryPage() {
     <div className="max-w-5xl w-full overflow-x-hidden space-y-5">
       <h1 className="text-2xl font-bold">Dateneingabe</h1>
 
-      <section className="bg-white border border-neutral-200 rounded-xl p-4 space-y-3 text-slate-900">
+      <section className="bg-slate-950/60 border border-slate-700 rounded-xl p-4 space-y-3 text-slate-100">
         <h2 className="font-semibold">A) Ad Spend + Lead Eingang (unabhängig vom Verkauf)</h2>
         <form onSubmit={submitTraffic} className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Field label="Monat">
-              <input type="month" value={trafficMonth} onChange={(e) => setTrafficMonth(e.target.value)} className="w-full min-w-0 max-w-full bg-white border border-neutral-300 rounded px-3 py-2 appearance-none" />
+              <input type="month" value={trafficMonth} onChange={(e) => setTrafficMonth(e.target.value)} className="w-full min-w-0 max-w-full bg-slate-900 text-slate-100 border border-slate-700 rounded px-3 py-2 appearance-none" />
             </Field>
             <Field label="Ad Spend (Monat)">
-              <input type="number" value={adSpend} onChange={(e) => setAdSpend(e.target.value)} className="w-full bg-white text-slate-900 placeholder:text-slate-400 border border-neutral-300 rounded px-3 py-2" />
+              <input type="number" value={adSpend} onChange={(e) => setAdSpend(e.target.value)} className="w-full bg-slate-900 text-slate-100 placeholder:text-slate-400 border border-slate-700 rounded px-3 py-2" />
             </Field>
             <Field label="Lead Eingang gesamt">
-              <input type="number" value={leads} onChange={(e) => setLeads(e.target.value)} className="w-full bg-white text-slate-900 placeholder:text-slate-400 border border-neutral-300 rounded px-3 py-2" />
+              <input type="number" value={leads} onChange={(e) => setLeads(e.target.value)} className="w-full bg-slate-900 text-slate-100 placeholder:text-slate-400 border border-slate-700 rounded px-3 py-2" />
             </Field>
             <Field label="Terminiert gesamt">
-              <input type="number" value={scheduled} onChange={(e) => setScheduled(e.target.value)} className="w-full bg-white text-slate-900 placeholder:text-slate-400 border border-neutral-300 rounded px-3 py-2" />
+              <input type="number" value={scheduled} onChange={(e) => setScheduled(e.target.value)} className="w-full bg-slate-900 text-slate-100 placeholder:text-slate-400 border border-slate-700 rounded px-3 py-2" />
             </Field>
             <Field label="Verloren in Terminierung">
-              <input type="number" value={lostScheduling} onChange={(e) => setLostScheduling(e.target.value)} className="w-full bg-white text-slate-900 placeholder:text-slate-400 border border-neutral-300 rounded px-3 py-2" />
+              <input type="number" value={lostScheduling} onChange={(e) => setLostScheduling(e.target.value)} className="w-full bg-slate-900 text-slate-100 placeholder:text-slate-400 border border-slate-700 rounded px-3 py-2" />
             </Field>
           </div>
           {errorA ? <p className="text-sm text-red-600">{errorA}</p> : null}
@@ -129,7 +129,7 @@ export default function DataEntryPage() {
         </form>
       </section>
 
-      <section className="bg-white border border-neutral-200 rounded-xl p-4 space-y-3 text-slate-900">
+      <section className="bg-slate-950/60 border border-slate-700 rounded-xl p-4 space-y-3 text-slate-100">
         <h2 className="font-semibold">B) Terminierter Kontakt bei Closer (separate Statistik)</h2>
         <form onSubmit={submitCloser} className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -143,7 +143,7 @@ export default function DataEntryPage() {
 
           {attendance === 'ERSCHIENEN' && outcome === 'FOLLOW_UP' ? (
             <Field label="Follow-Up Termin">
-              <input type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} className="w-full bg-white text-slate-900 placeholder:text-slate-400 border border-neutral-300 rounded px-3 py-2" />
+              <input type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} className="w-full bg-slate-900 text-slate-100 placeholder:text-slate-400 border border-slate-700 rounded px-3 py-2" />
             </Field>
           ) : null}
 
@@ -151,15 +151,15 @@ export default function DataEntryPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Select label="Zahlungsart" value={paymentType} onChange={(v) => setPaymentType(v as Payment)} options={[{ v: 'FULL', l: 'Vollzahler' }, { v: 'INSTALLMENT', l: 'Ratenzahler' }]} />
               <Field label="Gesamthöhe Abschluss (€)">
-                <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-white text-slate-900 placeholder:text-slate-400 border border-neutral-300 rounded px-3 py-2" />
+                <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full bg-slate-900 text-slate-100 placeholder:text-slate-400 border border-slate-700 rounded px-3 py-2" />
               </Field>
               {paymentType === 'INSTALLMENT' ? (
                 <>
                   <Field label="Ratenhöhe (€)">
-                    <input type="number" value={installmentAmount} onChange={(e) => setInstallmentAmount(e.target.value)} className="w-full bg-white text-slate-900 placeholder:text-slate-400 border border-neutral-300 rounded px-3 py-2" />
+                    <input type="number" value={installmentAmount} onChange={(e) => setInstallmentAmount(e.target.value)} className="w-full bg-slate-900 text-slate-100 placeholder:text-slate-400 border border-slate-700 rounded px-3 py-2" />
                   </Field>
                   <Field label="Anzahl Raten">
-                    <input type="number" value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} className="w-full bg-white text-slate-900 placeholder:text-slate-400 border border-neutral-300 rounded px-3 py-2" />
+                    <input type="number" value={installmentCount} onChange={(e) => setInstallmentCount(e.target.value)} className="w-full bg-slate-900 text-slate-100 placeholder:text-slate-400 border border-slate-700 rounded px-3 py-2" />
                   </Field>
                 </>
               ) : null}
@@ -182,7 +182,7 @@ function Select({ label, value, onChange, options }: { label: string; value: str
   return (
     <label className="text-sm block">
       {label}
-      <select className="w-full bg-white text-slate-900 placeholder:text-slate-400 border border-neutral-300 rounded px-3 py-2" value={value} onChange={(e) => onChange(e.target.value)}>
+      <select className="w-full bg-slate-900 text-slate-100 placeholder:text-slate-400 border border-slate-700 rounded px-3 py-2" value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="">Bitte wählen</option>
         {options.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
       </select>
