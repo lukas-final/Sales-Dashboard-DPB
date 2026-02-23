@@ -22,18 +22,21 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-white flex items-center justify-center p-4">
-      <form onSubmit={onSubmit} className="w-full max-w-sm bg-neutral-900 border border-neutral-800 rounded-xl p-6 space-y-4">
-        <h1 className="text-xl font-semibold">Sales Dashboard Login</h1>
+    <main className="min-h-screen flex items-center justify-center p-4">
+      <form onSubmit={onSubmit} className="apple-card w-full max-w-sm p-6 space-y-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Willkommen</h1>
+          <p className="text-sm text-slate-500">Sales Dashboard Login</p>
+        </div>
         <input
           type="password"
-          className="w-full rounded-lg bg-neutral-800 border border-neutral-700 px-3 py-2"
+          className="apple-input"
           placeholder="Passwort"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {error ? <p className="text-red-400 text-sm">{error}</p> : null}
-        <button className="w-full bg-blue-600 hover:bg-blue-500 rounded-lg py-2">Einloggen</button>
+        {error ? <p className="text-red-600 text-sm">{error}</p> : null}
+        <button className="w-full apple-btn-primary">Einloggen</button>
       </form>
     </main>
   )
