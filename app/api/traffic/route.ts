@@ -34,3 +34,35 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
+
+export async function PUT(req: Request) {
+  if (!isAuthed()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const b = await req.json()
+  const id = String(b.id || '')
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+  const entry_date = String(b.entry_date || '')
+  const payload = {
+    ...(entry_date ? { entry_date, month_key: entry_date.slice(0, 7) } : {}),
+    ...(b.ad_spend !== undefined ? { ad_spend: Number(b.ad_spend || 0) } : {}),
+    ...(b.leads !== undefined ? { leads: Number(b.leads || 0) } : {}),
+    ...(b.scheduled !== undefined ? { scheduled: Number(b.scheduled || 0) } : {}),
+    ...(b.lost_at_scheduling !== undefined ? { lost_at_scheduling: Number(b.lost_at_scheduling || 0) } : {}),
+  }
+
+  const sb = supabaseAdmin()
+  const { data, error } = await sb.from('traffic_entries').update(payload).eq('id', id).select('*').single()
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json(data)
+}
+
+export async function DELETE(req: Request) {
+  if (!isAuthed()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { searchParams } = new URL(req.url)
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+  const sb = supabaseAdmin()
+  const { error } = await sb.from('traffic_entries').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}

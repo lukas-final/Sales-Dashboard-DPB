@@ -13,6 +13,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
         <Link href="/dashboard">Dashboard</Link>
         <Link href="/data-entry">Dateneingabe</Link>
         <Link href="/admin">Admin</Link>
+        <Link href="/entries">Einträge</Link>
         <form action="/api/logout" method="post" className="ml-auto"><button>Logout</button></form>
       </nav>
       <div className="p-4">{children}</div>
