@@ -3,8 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const pass = process.env.APP_ADMIN_PASSWORD
-  const auth = cookies().get('sdpb_auth')?.value
+  const pass = String(process.env.APP_ADMIN_PASSWORD || '').trim()
+  const auth = String(cookies().get('sdpb_auth')?.value || '').trim()
   if (!pass || auth !== pass) redirect('/login')
 
   return (

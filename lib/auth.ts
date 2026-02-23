@@ -3,8 +3,8 @@ import { cookies } from 'next/headers'
 const COOKIE_NAME = 'sdpb_auth'
 
 export function isAuthed() {
-  const pass = process.env.APP_ADMIN_PASSWORD
-  const value = cookies().get(COOKIE_NAME)?.value
+  const pass = String(process.env.APP_ADMIN_PASSWORD || '').trim()
+  const value = String(cookies().get(COOKIE_NAME)?.value || '').trim()
   return Boolean(pass && value && value === pass)
 }
 
