@@ -32,7 +32,7 @@ export default function DashboardPage() {
       const all = [...salesRows, ...trafficRows]
       const fromData = Array.from(new Set(all.map((r) => r.month_key).filter(Boolean)))
       const now = new Date()
-      const recent = Array.from({ length: 12 }).map((_, i) => {
+      const recent = Array.from({ length: 24 }).map((_, i) => {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
       })
@@ -49,8 +49,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <h1 className="text-2xl font-bold">Sales Dashboard</h1>
-        <select className="ml-auto bg-neutral-800 border border-neutral-700 rounded px-2 py-1" value={month} onChange={(e) => setMonth(e.target.value)}>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <select className="ml-auto w-40 bg-slate-900 text-slate-100 border border-slate-700 rounded px-2 py-1" value={month} onChange={(e) => setMonth(e.target.value)}>
           <option value="all">Gesamt</option>
           {months.map((m)=><option key={m} value={m}>{m}</option>)}
         </select>
@@ -69,11 +69,11 @@ export default function DashboardPage() {
         <Card title="ROI" value={pct(t?.roi)} />
       </div>
 
-      <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4">
+      <div className="bg-slate-950/60 border border-slate-700 rounded-xl p-4 text-slate-100">
         <h2 className="font-semibold mb-3">Closer Statistiken</h2>
         <div className="space-y-2">
           {data?.closerStats?.map((c) => (
-            <div key={c.name} className="text-sm border border-neutral-800 rounded p-3">
+            <div key={c.name} className="text-sm border border-slate-700 rounded p-3 bg-slate-900/70">
               <div className="font-medium">{c.name}</div>
               <div>Abschlussquote: {pct(c.closeRate)} | Follow Up: {pct(c.followUpRate)} | Verloren: {pct(c.lostRate)}</div>
               <div>Umsatz: {euro(c.revenue)} | Vollzahler: {euro(c.full)} | Ratenzahler: {euro(c.installment)}</div>
@@ -86,7 +86,7 @@ export default function DashboardPage() {
 }
 
 function Card({ title, value }: { title: string; value: string }) {
-  return <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-3"><div className="text-neutral-400">{title}</div><div className="text-lg font-semibold">{value}</div></div>
+  return <div className="bg-slate-950/60 border border-slate-700 rounded-xl p-3 text-slate-100"><div className="text-slate-400">{title}</div><div className="text-lg font-semibold">{value}</div></div>
 }
 
 function euro(v?: number) { return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(v ?? 0) }

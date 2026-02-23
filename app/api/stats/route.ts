@@ -3,12 +3,12 @@ import { isAuthed } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 type SalesRow = {
+  closer_id: string | null
   appointments: number | null
   no_shows: number | null
   result: 'FOLLOW_UP' | 'CLOSED' | 'LOST'
   amount: number | null
   payment_type: 'FULL' | 'INSTALLMENT' | null
-  closers: Array<{ name: string }> | null
 }
 
 type TrafficRow = {
@@ -26,19 +26,22 @@ export async function GET(req: Request) {
   const month = searchParams.get('month')
   const sb = supabaseAdmin()
 
-  let salesQ = sb.from('sales_entries').select('appointments,no_shows,result,amount,payment_type,closers(name)')
+  let salesQ = sb.from('sales_entries').select('closer_id,appointments,no_shows,result,amount,payment_type')
   let trafficQ = sb.from('traffic_entries').select('ad_spend,leads,scheduled,lost_at_scheduling')
+  const closersQ = sb.from('closers').select('id,name')
   if (month && month !== 'all') {
     salesQ = salesQ.eq('month_key', month)
     trafficQ = trafficQ.eq('month_key', month)
   }
 
-  const [{ data: salesData, error: salesErr }, { data: trafficData, error: trafficErr }] = await Promise.all([salesQ, trafficQ])
-  if (salesErr) return NextResponse.json({ error: salesErr.message }, { status: 500 })
-  if (trafficErr) return NextResponse.json({ error: trafficErr.message }, { status: 500 })
+  const [salesRes, trafficRes, closersRes] = await Promise.all([salesQ, trafficQ, closersQ])
+  if (salesRes.error) return NextResponse.json({ error: salesRes.error.message }, { status: 500 })
+  if (trafficRes.error) return NextResponse.json({ error: trafficRes.error.message }, { status: 500 })
+  if (closersRes.error) return NextResponse.json({ error: closersRes.error.message }, { status: 500 })
 
-  const salesRows = (salesData ?? []) as SalesRow[]
-  const trafficRows = (trafficData ?? []) as TrafficRow[]
+  const salesRows = (salesRes.data ?? []) as SalesRow[]
+  const trafficRows = (trafficRes.data ?? []) as TrafficRow[]
+  const closerMap = new Map<string, string>((closersRes.data ?? []).map((c: { id: string; name: string }) => [c.id, c.name]))
 
   const sumSales = (fn: (r: SalesRow) => number) => salesRows.reduce((a, c) => a + fn(c), 0)
   const sumTraffic = (fn: (r: TrafficRow) => number) => trafficRows.reduce((a, c) => a + fn(c), 0)
@@ -58,7 +61,7 @@ export async function GET(req: Request) {
 
   const byCloser: Record<string, Acc> = {}
   for (const r of salesRows) {
-    const name = r.closers?.[0]?.name || 'Unknown'
+    const name = r.closer_id ? (closerMap.get(r.closer_id) || 'Unknown') : 'Unknown'
     byCloser[name] ||= { total: 0, followUp: 0, closed: 0, lost: 0, revenue: 0, full: 0, installment: 0 }
     byCloser[name].total += 1
     if (r.result === 'FOLLOW_UP') byCloser[name].followUp += 1
